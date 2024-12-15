@@ -17,14 +17,12 @@
                 <li v-for="car in cars"
                     :key="car.id"
                     class="border p-3 my-2 rounded shadow flex items-center justify-between">
-                    <span>{{ car.model }}</span>
-                    <!-- Jeœli auto dostêpne, poka¿ przycisk Rezerwacji -->
+                    <span>{{ car.brand }} {{ car.model }} ({{ car.type }}, {{ car.year }}, {{ car.horsepower }} KM)</span>
                     <button v-if="car.available"
                             class="btn btn-success"
                             @click="reserveCar(car)">
                         Rezerwuj
                     </button>
-                    <!-- Jeœli auto zarezerwowane, poka¿ komunikat -->
                     <span v-else class="text-gray-500">Zarezerwowane</span>
                 </li>
             </ul>
@@ -36,25 +34,27 @@
 
             <!-- Formularz dodawania samochodu -->
             <form @submit.prevent="addCar" class="mb-5">
-                <input v-model="newCarModel" placeholder="Model samochodu" class="border p-2 mr-2" />
+                <input v-model="newCar.brand" placeholder="Marka" class="border p-2 mr-2" />
+                <input v-model="newCar.model" placeholder="Model" class="border p-2 mr-2" />
+                <input v-model="newCar.type" placeholder="Typ" class="border p-2 mr-2" />
+                <input v-model="newCar.year" placeholder="Rocznik" type="number" class="border p-2 mr-2" />
+                <input v-model="newCar.horsepower" placeholder="KM" type="number" class="border p-2 mr-2" />
                 <button type="submit" class="btn btn-success">Dodaj samochód</button>
             </form>
 
-            <!-- Lista samochodów z opcjami administracyjnymi -->
-            <div v-for="car in cars" :key="car.id" class="border p-3 my-2 rounded shadow flex items-center justify-between">
-                <!-- Tryb Edycji -->
-                <div v-if="car.isEditing" class="flex items-center">
-                    <input v-model="car.editModel"
-                           class="border p-1 mr-2"
-                           @input="formatModelInput(car)" />
+            <!-- Lista samochodów -->
+            <div v-for="car in cars" :key="car.id" class="border p-3 my-2 rounded shadow">
+                <div v-if="car.isEditing">
+                    <input v-model="car.edit.brand" placeholder="Marka" class="border p-1 mr-2" />
+                    <input v-model="car.edit.model" placeholder="Model" class="border p-1 mr-2" />
+                    <input v-model="car.edit.type" placeholder="Typ" class="border p-1 mr-2" />
+                    <input v-model="car.edit.year" placeholder="Rocznik" type="number" class="border p-1 mr-2" />
+                    <input v-model="car.edit.horsepower" placeholder="KM" type="number" class="border p-1 mr-2" />
                     <button class="btn btn-success mr-2" @click="saveEdit(car)">Zapisz</button>
                     <button class="btn btn-danger" @click="cancelEdit(car)">Anuluj</button>
-                    <p v-if="car.error" class="text-red-500 ml-2">{{ car.error }}</p>
                 </div>
-
-                <!-- Tryb Wyœwietlania -->
-                <div v-else class="flex items-center">
-                    <p class="mr-2">{{ car.model }}</p>
+                <div v-else>
+                    <p>{{ car.brand }} {{ car.model }} ({{ car.type }}, {{ car.year }}, {{ car.horsepower }} KM)</p>
                     <button class="btn btn-warning mr-2" @click="startEdit(car)">Edytuj</button>
                     <button class="btn btn-danger" @click="deleteCar(car._id)">Usuñ</button>
                 </div>
@@ -70,89 +70,45 @@
         data() {
             return {
                 cars: [],
-                newCarModel: '',
-                currentView: 'user', // Domyœlnie widok u¿ytkownika
+                newCar: { brand: '', model: '', type: '', year: '', horsepower: '' },
+                currentView: 'user',
             };
         },
         async mounted() {
             this.fetchCars();
         },
         methods: {
-            // Pobierz listê samochodów
             async fetchCars() {
-                try {
-                    const response = await axios.get('http://localhost:3000/cars');
-                    this.cars = response.data.map(car => ({
-                        ...car,
-                        isEditing: false,
-                        editModel: car.model,
-                        error: null,
-                    }));
-                } catch (error) {
-                    console.error('B³¹d podczas pobierania samochodów:', error);
-                }
+                const response = await axios.get('http://localhost:3000/cars');
+                this.cars = response.data.map(car => ({
+                    ...car,
+                    isEditing: false,
+                    edit: { ...car },
+                }));
             },
-            // Rozpocznij edycjê
+            async addCar() {
+                await axios.post('http://localhost:3000/cars', this.newCar);
+                this.newCar = { brand: '', model: '', type: '', year: '', horsepower: '' };
+                this.fetchCars();
+            },
             startEdit(car) {
                 car.isEditing = true;
-                car.error = null;
             },
-            // Formatowanie (wielka litera na pocz¹tku)
-            formatModelInput(car) {
-                if (car.editModel) {
-                    car.editModel = car.editModel.charAt(0).toUpperCase() + car.editModel.slice(1);
-                }
-            },
-            // Zapisz zmiany
             async saveEdit(car) {
-                if (!car.editModel.trim()) {
-                    car.error = 'Pole nie mo¿e byæ puste!';
-                    return;
-                }
-                car.error = null;
-
-                try {
-                    await axios.put(`http://localhost:3000/cars/${car._id}`, { model: car.editModel });
-                    car.model = car.editModel; // Aktualizuj model na liœcie
-                    car.isEditing = false;
-                } catch (error) {
-                    console.error('B³¹d podczas zapisywania edycji:', error);
-                }
+                await axios.put(`http://localhost:3000/cars/${car._id}`, car.edit);
+                car.isEditing = false;
+                this.fetchCars();
             },
-            // Anuluj edycjê
             cancelEdit(car) {
                 car.isEditing = false;
-                car.error = null;
-                car.editModel = car.model; // Przywróæ oryginaln¹ wartoœæ
             },
-            // Dodawanie nowego samochodu
-            async addCar() {
-                if (!this.newCarModel.trim()) return;
-                try {
-                    await axios.post('http://localhost:3000/cars', { model: this.newCarModel, available: true });
-                    this.newCarModel = '';
-                    this.fetchCars();
-                } catch (error) {
-                    console.error('B³¹d podczas dodawania samochodu:', error);
-                }
-            },
-            // Usuwanie samochodu
             async deleteCar(id) {
-                try {
-                    await axios.delete(`http://localhost:3000/cars/${id}`);
-                    this.fetchCars();
-                } catch (error) {
-                    console.error('B³¹d podczas usuwania samochodu:', error);
-                }
+                await axios.delete(`http://localhost:3000/cars/${id}`);
+                this.fetchCars();
             },
-            // Rezerwacja samochodu
             async reserveCar(car) {
-                try {
-                    await axios.put(`http://localhost:3000/cars/${car._id}`, { available: false });
-                    car.available = false; // Aktualizacja lokalna
-                } catch (error) {
-                    console.error('B³¹d podczas rezerwacji samochodu:', error);
-                }
+                car.available = false;
+                await axios.put(`http://localhost:3000/cars/${car._id}`, { available: false });
             },
         },
     };

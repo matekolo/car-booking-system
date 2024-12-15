@@ -11,17 +11,21 @@ app.use(cors());
 app.use(express.json());
 
 // Po³¹czenie z MongoDB
-const dbURI = 'mongodb://127.0.0.1:27017/car-reservations'; // Lokalna baza danych
-// const dbURI = 'mongodb+srv://<username>:<password>@cluster.mongodb.net/car-reservations'; // MongoDB Atlas
+const dbURI = 'mongodb://127.0.0.1:27017/car-reservations';
 
-mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(dbURI)
     .then(() => console.log('Po³¹czono z MongoDB'))
     .catch(err => console.error('B³¹d po³¹czenia z MongoDB:', err));
 
+
 // Definicja schematu i modelu dla samochodów
 const carSchema = new mongoose.Schema({
-    model: { type: String, required: true },
-    available: { type: Boolean, default: true },
+    brand: { type: String, required: true }, // Marka
+    model: { type: String, required: true }, // Model
+    type: { type: String, required: true },  // Typ (SUV, Sedan itp.)
+    year: { type: Number, required: true },  // Rocznik
+    horsepower: { type: Number, required: true }, // Iloœæ koni mechanicznych
+    available: { type: Boolean, default: true },  // Czy dostêpny
 });
 
 const Car = mongoose.model('Car', carSchema);
@@ -77,22 +81,6 @@ app.delete('/cars/:id', async (req, res) => {
         }
     } catch (err) {
         res.status(500).json({ message: 'B³¹d usuwania samochodu', error: err });
-    }
-});
-
-// Rezerwacja samochodu
-app.post('/cars/:id/reserve', async (req, res) => {
-    try {
-        const car = await Car.findById(req.params.id);
-        if (car && car.available) {
-            car.available = false;
-            await car.save();
-            res.json(car);
-        } else {
-            res.status(400).json({ message: 'Samochód nie dostêpny lub nie znaleziony' });
-        }
-    } catch (err) {
-        res.status(400).json({ message: 'B³¹d rezerwacji samochodu', error: err });
     }
 });
 
