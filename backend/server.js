@@ -1,39 +1,64 @@
-// Import wymaganych modu³ów
 const express = require('express');
 const mongoose = require('mongoose');
+const path = require('path');
+const multer = require('multer');
 const cors = require('cors');
 
-// Konfiguracja aplikacji
 const app = express();
-const port = 3000;
+const PORT = 3000;
 
-app.use(cors());
+// Middleware
 app.use(express.json());
+app.use(cors());
 
-// Po³¹czenie z MongoDB
-const dbURI = 'mongodb://127.0.0.1:27017/car-reservations';
+// Konfiguracja folderu statycznego dla zdjêæ
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-mongoose.connect(dbURI)
-    .then(() => console.log('Po³¹czono z MongoDB'))
-    .catch(err => console.error('B³¹d po³¹czenia z MongoDB:', err));
+// MongoDB URL
+mongoose.connect('mongodb://127.0.0.1:27017/carBookingSystem', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+});
 
-
-// Definicja schematu i modelu dla samochodów
+// Schemat samochodu
 const carSchema = new mongoose.Schema({
-    brand: { type: String, required: true }, // Marka
-    model: { type: String, required: true }, // Model
-    type: { type: String, required: true },  // Typ (SUV, Sedan itp.)
-    year: { type: Number, required: true },  // Rocznik
-    horsepower: { type: Number, required: true }, // Iloœæ koni mechanicznych
-    available: { type: Boolean, default: true },  // Czy dostêpny
+    brand: { type: String, required: true },
+    model: { type: String, required: true },
+    type: { type: String },
+    year: { type: Number },
+    horsepower: { type: Number },
+    available: { type: Boolean, default: true },
+    imagePath: { type: String }, // Œcie¿ka do zdjêcia
 });
 
 const Car = mongoose.model('Car', carSchema);
 
-// Endpoint g³ówny
-app.get('/', (req, res) => {
-    res.send('Backend is running with MongoDB!');
+// Konfiguracja Multer do obs³ugi plików
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, 'uploads')); // Œcie¿ka do folderu uploads
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`); // Unikalna nazwa pliku
+    },
 });
+
+const upload = multer({
+    storage,
+    fileFilter: (req, file, cb) => {
+        const allowedFileTypes = /jpeg|jpg|png/;
+        const isValidExtension = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
+        const isValidMimeType = allowedFileTypes.test(file.mimetype);
+
+        if (isValidExtension && isValidMimeType) {
+            cb(null, true);
+        } else {
+            cb(new Error('Plik musi byæ w formacie JPG, JPEG lub PNG!'));
+        }
+    },
+});
+
+// Endpointy
 
 // Pobierz listê samochodów
 app.get('/cars', async (req, res) => {
@@ -41,50 +66,47 @@ app.get('/cars', async (req, res) => {
         const cars = await Car.find();
         res.json(cars);
     } catch (err) {
-        res.status(500).json({ message: 'B³¹d pobierania samochodów', error: err });
+        res.status(500).json({ message: 'B³¹d serwera', error: err.message });
     }
 });
 
 // Dodaj nowy samochód
-app.post('/cars', async (req, res) => {
+app.post('/cars', upload.single('image'), async (req, res) => {
     try {
-        const newCar = new Car(req.body);
+        const carData = req.body;
+        if (req.file) {
+            carData.imagePath = `/uploads/${req.file.filename}`;
+        }
+
+        const newCar = new Car(carData);
         const savedCar = await newCar.save();
         res.status(201).json(savedCar);
     } catch (err) {
-        res.status(400).json({ message: 'B³¹d dodawania samochodu', error: err });
+        res.status(400).json({ message: 'B³¹d dodawania samochodu', error: err.message });
     }
 });
 
-// Edytuj samochód
+// Zaktualizuj samochód
 app.put('/cars/:id', async (req, res) => {
     try {
         const updatedCar = await Car.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (updatedCar) {
-            res.json(updatedCar);
-        } else {
-            res.status(404).json({ message: 'Samochód nie znaleziony' });
-        }
+        res.json(updatedCar);
     } catch (err) {
-        res.status(400).json({ message: 'B³¹d edycji samochodu', error: err });
+        res.status(400).json({ message: 'B³¹d aktualizacji samochodu', error: err.message });
     }
 });
 
 // Usuñ samochód
 app.delete('/cars/:id', async (req, res) => {
     try {
-        const deletedCar = await Car.findByIdAndDelete(req.params.id);
-        if (deletedCar) {
-            res.status(204).end();
-        } else {
-            res.status(404).json({ message: 'Samochód nie znaleziony' });
-        }
+        await Car.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Samochód zosta³ usuniêty' });
     } catch (err) {
-        res.status(500).json({ message: 'B³¹d usuwania samochodu', error: err });
+        res.status(400).json({ message: 'B³¹d usuwania samochodu', error: err.message });
     }
 });
 
 // Uruchomienie serwera
-app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`Serwer dzia³a na porcie ${PORT}`);
 });

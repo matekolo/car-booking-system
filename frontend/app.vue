@@ -17,7 +17,10 @@
                 <li v-for="car in cars"
                     :key="car.id"
                     class="border p-3 my-2 rounded shadow flex items-center justify-between">
-                    <span>{{ car.brand }} {{ car.model }} ({{ car.type }}, {{ car.year }}, {{ car.horsepower }} KM)</span>
+                    <div class="flex items-center">
+                        <img v-if="car.imagePath" :src="`http://localhost:3000${car.imagePath}`" alt="Zdjêcie auta" class="w-24 h-16 object-cover mr-3" />
+                        <span>{{ car.brand }} {{ car.model }} ({{ car.type }}, {{ car.year }}, {{ car.horsepower }} KM)</span>
+                    </div>
                     <button v-if="car.available"
                             class="btn btn-success"
                             @click="reserveCar(car)">
@@ -33,12 +36,13 @@
             <h1 class="text-2xl font-bold mb-3">Panel Administracyjny</h1>
 
             <!-- Formularz dodawania samochodu -->
-            <form @submit.prevent="addCar" class="mb-5">
+            <form @submit.prevent="addCar" class="mb-5" enctype="multipart/form-data">
                 <input v-model="newCar.brand" placeholder="Marka" class="border p-2 mr-2" />
                 <input v-model="newCar.model" placeholder="Model" class="border p-2 mr-2" />
                 <input v-model="newCar.type" placeholder="Typ" class="border p-2 mr-2" />
                 <input v-model="newCar.year" placeholder="Rocznik" type="number" class="border p-2 mr-2" />
                 <input v-model="newCar.horsepower" placeholder="KM" type="number" class="border p-2 mr-2" />
+                <input type="file" ref="imageFile" class="border p-2 mr-2" />
                 <button type="submit" class="btn btn-success">Dodaj samochód</button>
             </form>
 
@@ -87,7 +91,23 @@
                 }));
             },
             async addCar() {
-                await axios.post('http://localhost:3000/cars', this.newCar);
+                const formData = new FormData();
+                formData.append('brand', this.newCar.brand);
+                formData.append('model', this.newCar.model);
+                formData.append('type', this.newCar.type);
+                formData.append('year', this.newCar.year);
+                formData.append('horsepower', this.newCar.horsepower);
+
+                if (this.$refs.imageFile.files[0]) {
+                    formData.append('image', this.$refs.imageFile.files[0]);
+                }
+
+                await axios.post('http://localhost:3000/cars', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+
                 this.newCar = { brand: '', model: '', type: '', year: '', horsepower: '' };
                 this.fetchCars();
             },
@@ -113,3 +133,4 @@
         },
     };
 </script>
+
