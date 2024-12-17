@@ -1,15 +1,17 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 const path = require('path');
 const multer = require('multer');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 
 const app = express();
 const PORT = 3000;
 
 // Middleware
-app.use(express.json());
 app.use(cors());
+app.use(bodyParser.json());
 
 // Konfiguracja folderu statycznego dla zdjêæ
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -18,7 +20,17 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 mongoose.connect('mongodb://127.0.0.1:27017/carBookingSystem', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+}).then(() => console.log('Po³¹czono z baz¹ danych'))
+    .catch(err => console.error('B³¹d po³¹czenia z baz¹ danych:', err));
+
+// Schemat u¿ytkownika
+const userSchema = new mongoose.Schema({
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    role: { type: String, default: 'client' }, // Rola: client lub admin
 });
+
+const User = mongoose.model('User', userSchema);
 
 // Schemat samochodu
 const carSchema = new mongoose.Schema({
@@ -58,7 +70,51 @@ const upload = multer({
     },
 });
 
-// Endpointy
+// Endpointy u¿ytkownika
+
+// Rejestracja
+app.post('/register', async (req, res) => {
+    try {
+        const { email, password, role } = req.body;
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'U¿ytkownik ju¿ istnieje' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = new User({ email, password: hashedPassword, role: role || 'client' });
+        await newUser.save();
+
+        res.status(201).json({ message: 'Rejestracja udana' });
+    } catch (err) {
+        res.status(500).json({ message: 'B³¹d serwera', error: err.message });
+    }
+});
+
+// Logowanie
+app.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: 'Niepoprawny email lub has³o' });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(400).json({ message: 'Niepoprawny email lub has³o' });
+        }
+
+        res.json({ message: 'Zalogowano pomyœlnie', role: user.role });
+    } catch (err) {
+        res.status(500).json({ message: 'B³¹d serwera', error: err.message });
+    }
+});
+
+// Endpointy samochodów
 
 // Pobierz listê samochodów
 app.get('/cars', async (req, res) => {
@@ -108,5 +164,5 @@ app.delete('/cars/:id', async (req, res) => {
 
 // Uruchomienie serwera
 app.listen(PORT, () => {
-    console.log(`Serwer dzia³a na porcie ${PORT}`);
+    console.log(`Serwer dzia³a na http://localhost:${PORT}`);
 });
