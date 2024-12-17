@@ -150,6 +150,12 @@
                 await axios.put(`http://localhost:3000/cars/${car._id}`, { available: false });
                 this.fetchCars();
             },
+
+            async startEdit(car) {
+                car.isEditing = true;
+                car.edit = { ...car }; // Kopiowanie danych samochodu do obiektu edycji
+            },
+
             async saveEdit(car) {
                 await axios.put(`http://localhost:3000/cars/${car._id}`, car.edit);
                 car.isEditing = false;
