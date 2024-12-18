@@ -32,6 +32,14 @@ const carSchema = new mongoose.Schema({
     availableDates: [String],
 });
 
+const reservationSchema = new mongoose.Schema({
+    carId: { type: mongoose.Schema.Types.ObjectId, ref: 'Car', required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    date: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+});
+
+const Reservation = mongoose.model('Reservation', reservationSchema);
 const User = mongoose.model('User', userSchema);
 const Car = mongoose.model('Car', carSchema);
 
@@ -49,6 +57,11 @@ const upload = multer({ storage });
 // Rejestracja u¿ytkownika
 app.post('/register', async (req, res) => {
     try {
+        const existingUser = await User.findOne({ email: req.body.email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Email jest ju¿ u¿ywany.' });
+        }
+
         const hashedPassword = await bcrypt.hash(req.body.password, 10);
         const user = new User({ email: req.body.email, password: hashedPassword });
         await user.save();
@@ -159,6 +172,7 @@ app.post('/cars/:id/remove-date', async (req, res) => {
     }
 });
 
+// Rezerwacja samochodu
 app.post('/cars/:id/reserve', async (req, res) => {
     try {
         const { date, userId } = req.body;
@@ -179,9 +193,11 @@ app.post('/cars/:id/reserve', async (req, res) => {
 
         // Usuñ termin z dostêpnych dat
         car.availableDates = car.availableDates.filter(d => d !== date);
-
-        // Zapisz zmiany
         await car.save();
+
+        // Zapisz rezerwacjê
+        const reservation = new Reservation({ carId: car._id, userId, date });
+        await reservation.save();
 
         res.status(200).json({ message: 'Rezerwacja zakoñczona sukcesem.' });
     } catch (error) {
@@ -189,6 +205,28 @@ app.post('/cars/:id/reserve', async (req, res) => {
     }
 });
 
+// Pobranie listy rezerwacji
+app.get('/reservations', async (req, res) => {
+    try {
+        const reservations = await Reservation.find().populate('carId').populate('userId');
+        res.json(reservations);
+    } catch (error) {
+        res.status(500).json({ message: 'B³¹d podczas pobierania rezerwacji.', error: error.message });
+    }
+});
+
+// Usuniêcie rezerwacji
+app.delete('/reservations/:id', async (req, res) => {
+    try {
+        const reservation = await Reservation.findByIdAndDelete(req.params.id);
+        if (!reservation) {
+            return res.status(404).json({ message: 'Rezerwacja nie zosta³a znaleziona.' });
+        }
+        res.status(200).json({ message: 'Rezerwacja zosta³a usuniêta.' });
+    } catch (error) {
+        res.status(500).json({ message: 'B³¹d podczas usuwania rezerwacji.', error: error.message });
+    }
+});
 
 // Usuniêcie samochodu
 app.delete('/cars/:id', async (req, res) => {
