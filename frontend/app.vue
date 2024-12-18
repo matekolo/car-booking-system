@@ -74,6 +74,21 @@
             </div>
         </div>
 
+        <!-- Widok rezerwacji -->
+        <div v-else-if="currentView === 'reservations'" class="container">
+            <h1 class="text-2xl font-bold mb-3">Lista Rezerwacji</h1>
+            <button @click="currentView = 'admin'" class="btn btn-primary mb-5">Powrót</button>
+            <div v-for="reservation in reservations" :key="reservation._id" class="border p-3 mb-2 rounded shadow">
+                <p v-if="reservation.carId">
+                    Samochód: {{ reservation.carId.brand }} {{ reservation.carId.model }}
+                </p>
+                <p v-else>Brak danych o samochodzie</p>
+                <p>Data rezerwacji: {{ reservation.date }}</p>
+                <p v-if="reservation.userId">U¿ytkownik: {{ reservation.userId.email }}</p>
+                <button @click="deleteReservation(reservation._id)" class="btn btn-danger">Usuñ rezerwacjê</button>
+            </div>
+        </div>
+
         <!-- Panel edycji samochodu -->
         <div v-if="editingCar !== null" class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
             <div class="bg-white p-5 rounded shadow-lg">
@@ -100,15 +115,11 @@
             </div>
         </div>
 
-        <!-- Widok rezerwacji -->
-        <div v-else-if="currentView === 'reservations'" class="container">
-            <h1 class="text-2xl font-bold mb-3">Lista Rezerwacji</h1>
-            <button @click="currentView = 'admin'" class="btn btn-primary mb-5">Powrót</button>
-            <div v-for="reservation in reservations" :key="reservation._id" class="border p-3 mb-2 rounded shadow">
-                <p>Samochód: {{ reservation.carId.brand }} {{ reservation.carId.model }}</p>
-                <p>Data rezerwacji: {{ reservation.date }}</p>
-                <p>U¿ytkownik: {{ reservation.userId.email }}</p>
-                <button @click="deleteReservation(reservation._id)" class="btn btn-danger">Usuñ rezerwacjê</button>
+        <!-- Modal komunikatu -->
+        <div v-if="modalMessage" class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+            <div class="bg-white p-5 rounded shadow-lg text-center">
+                <h3 class="text-lg font-bold mb-3">{{ modalMessage }}</h3>
+                <button @click="closeModal" class="btn btn-primary mt-2">OK</button>
             </div>
         </div>
     </div>
@@ -131,89 +142,79 @@
                 newDate: "",
                 addingDateCarId: null,
                 reservations: [],
+                modalMessage: null,
             };
         },
         methods: {
-            // Rejestracja u¿ytkownika
+            showModal(message) {
+                this.modalMessage = message;
+            },
+            closeModal() {
+                this.modalMessage = null;
+            },
             async registerUser() {
                 try {
                     if (!this.registerData.email || !this.registerData.password) {
-                        alert("Proszê wprowadziæ email i has³o.");
+                        this.showModal("Proszê wprowadziæ email i has³o.");
                         return;
                     }
-
                     const response = await axios.post("http://localhost:3000/register", this.registerData);
-                    alert(response.data.message);
-                    this.currentView = "login"; // Prze³¹cz na ekran logowania
+                    this.showModal(response.data.message);
+                    this.currentView = "login";
                 } catch (error) {
-                    alert(error.response?.data?.message || "B³¹d podczas rejestracji.");
+                    this.showModal(error.response?.data?.message || "B³¹d podczas rejestracji.");
                 }
             },
-
-            // Logowanie u¿ytkownika
             async loginUser() {
                 try {
                     if (!this.loginData.email || !this.loginData.password) {
-                        alert("Proszê wprowadziæ email i has³o.");
+                        this.showModal("Proszê wprowadziæ email i has³o.");
                         return;
                     }
-
                     const response = await axios.post("http://localhost:3000/login", this.loginData);
                     this.loggedInUserId = response.data.userId;
                     this.userRole = response.data.role;
                     this.currentView = this.userRole === "admin" ? "admin" : "user";
-                    this.fetchCars(); // Pobierz listê samochodów po zalogowaniu
+                    this.fetchReservations();
+                    this.fetchCars();
                 } catch (error) {
-                    alert(error.response?.data?.message || "B³¹d podczas logowania.");
+                    this.showModal("B³¹d podczas logowania.");
                 }
             },
-
-            // Pobieranie listy samochodów
             async fetchCars() {
                 try {
                     const response = await axios.get("http://localhost:3000/cars");
                     this.cars = response.data;
                 } catch (error) {
-                    alert("B³¹d podczas pobierania listy samochodów.");
+                    this.showModal("B³¹d podczas pobierania listy samochodów.");
                 }
             },
-
-            // Rezerwacja samochodu
             async reserveCar(carId, date) {
                 try {
-                    await axios.post(`http://localhost:3000/cars/${carId}/reserve`, {
-                        date,
-                        userId: this.loggedInUserId,
-                    });
-                    alert("Rezerwacja zakoñczona sukcesem.");
+                    await axios.post(`http://localhost:3000/cars/${carId}/reserve`, { date, userId: this.loggedInUserId });
+                    this.showModal("Rezerwacja zakoñczona sukcesem.");
                     this.fetchCars();
                 } catch (error) {
-                    alert("B³¹d podczas rezerwacji.");
+                    this.showModal("B³¹d podczas rezerwacji.");
                 }
             },
-
-            // Pobieranie listy rezerwacji dla admina
             async fetchReservations() {
                 try {
                     const response = await axios.get("http://localhost:3000/reservations");
                     this.reservations = response.data;
                 } catch (error) {
-                    alert("B³¹d podczas pobierania rezerwacji.");
+                    this.showModal("B³¹d podczas pobierania rezerwacji.");
                 }
             },
-
-            // Usuwanie rezerwacji
             async deleteReservation(reservationId) {
                 try {
                     await axios.delete(`http://localhost:3000/reservations/${reservationId}`);
-                    alert("Rezerwacja zosta³a usuniêta.");
-                    this.fetchReservations(); // Odœwie¿ listê rezerwacji
+                    this.showModal("Rezerwacja zosta³a usuniêta.");
+                    this.fetchReservations();
                 } catch (error) {
-                    alert("B³¹d podczas usuwania rezerwacji.");
+                    this.showModal("B³¹d podczas usuwania rezerwacji.");
                 }
             },
-
-            // Dodawanie samochodu
             async addCar() {
                 try {
                     const formData = new FormData();
@@ -221,21 +222,25 @@
                     formData.append("model", this.newCar.model);
                     formData.append("year", this.newCar.year);
                     formData.append("horsepower", this.newCar.horsepower);
-
                     if (this.$refs.imageFile.files[0]) {
                         formData.append("image", this.$refs.imageFile.files[0]);
                     }
-
                     await axios.post("http://localhost:3000/cars", formData);
-                    alert("Samochód zosta³ dodany.");
-                    this.fetchCars(); // Odœwie¿ listê samochodów
-                    this.newCar = { brand: "", model: "", year: "", horsepower: "" }; // Wyczyœæ formularz
+                    this.showModal("Samochód zosta³ dodany.");
+                    this.fetchCars();
                 } catch (error) {
-                    alert("B³¹d podczas dodawania samochodu.");
+                    this.showModal("B³¹d podczas dodawania samochodu.");
                 }
             },
-
-            // Edycja samochodu
+            async deleteCar(carId) {
+                try {
+                    await axios.delete(`http://localhost:3000/cars/${carId}`);
+                    this.showModal("Samochód zosta³ usuniêty.");
+                    this.fetchCars();
+                } catch (error) {
+                    this.showModal("B³¹d podczas usuwania samochodu.");
+                }
+            },
             async saveEdit() {
                 try {
                     const formData = new FormData();
@@ -243,93 +248,58 @@
                     formData.append("model", this.editingCar.model);
                     formData.append("year", this.editingCar.year);
                     formData.append("horsepower", this.editingCar.horsepower);
-
                     if (this.$refs.editImageFile && this.$refs.editImageFile.files[0]) {
                         formData.append("image", this.$refs.editImageFile.files[0]);
                     }
-
                     await axios.put(`http://localhost:3000/cars/${this.editingCar._id}`, formData);
-                    alert("Samochód zosta³ zaktualizowany.");
-                    this.fetchCars(); // Odœwie¿ listê samochodów
-                    this.editingCar = null; // Zamknij panel edycji
-                } catch (error) {
-                    alert("B³¹d podczas edycji samochodu.");
-                }
-            },
-
-            // Usuwanie samochodu
-            async deleteCar(carId) {
-                try {
-                    await axios.delete(`http://localhost:3000/cars/${carId}`);
-                    alert("Samochód zosta³ usuniêty.");
+                    this.showModal("Samochód zosta³ zaktualizowany.");
                     this.fetchCars();
+                    this.editingCar = null;
                 } catch (error) {
-                    alert("B³¹d podczas usuwania samochodu.");
+                    this.showModal("B³¹d podczas edycji samochodu.");
                 }
             },
-
-            // Dodawanie terminu rezerwacji
             async addDateToCar() {
                 if (!this.newDate) {
-                    alert("Proszê wprowadziæ datê.");
+                    this.showModal("Proszê wprowadziæ datê.");
                     return;
                 }
                 try {
-                    await axios.post(`http://localhost:3000/cars/${this.addingDateCarId}/add-date`, {
-                        date: this.newDate,
-                    });
-                    alert("Termin dodany pomyœlnie.");
+                    await axios.post(`http://localhost:3000/cars/${this.addingDateCarId}/add-date`, { date: this.newDate });
+                    this.showModal("Termin dodany pomyœlnie.");
                     this.newDate = "";
                     this.addingDateCarId = null;
                     this.fetchCars();
                 } catch (error) {
-                    alert("B³¹d podczas dodawania terminu.");
+                    this.showModal("B³¹d podczas dodawania terminu.");
                 }
             },
-
-            // Usuwanie terminu rezerwacji
             async removeDateFromCar(carId, date) {
                 try {
                     await axios.post(`http://localhost:3000/cars/${carId}/remove-date`, { date });
-                    alert("Termin zosta³ usuniêty.");
+                    this.showModal("Termin zosta³ usuniêty.");
                     this.fetchCars();
                 } catch (error) {
-                    alert("B³¹d podczas usuwania terminu.");
+                    this.showModal("B³¹d podczas usuwania terminu.");
                 }
             },
-
-            // Rozpoczêcie edycji samochodu
             startEdit(car) {
                 this.editingCar = { ...car };
             },
-
-            // Anulowanie edycji samochodu
             cancelEdit() {
                 this.editingCar = null;
             },
-
-            // Otwieranie panelu dodawania terminu
             openAddDatePanel(carId) {
                 this.addingDateCarId = carId;
             },
-
             closeAddDatePanel() {
                 this.addingDateCarId = null;
                 this.newDate = "";
             },
-
-            // Wylogowanie u¿ytkownika
             logout() {
                 this.currentView = "login";
                 this.loggedInUserId = null;
                 this.userRole = null;
-            },
-        },
-        watch: {
-            currentView(newView) {
-                if (newView === "reservations") {
-                    this.fetchReservations();
-                }
             },
         },
     };
