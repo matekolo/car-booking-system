@@ -110,12 +110,35 @@ app.post('/login', async (req, res) => {
 // Pobranie listy samochodów
 app.get('/cars', async (req, res) => {
     try {
-        const cars = await Car.find();
+        const { brand, model, year, sort } = req.query;
+
+        let query = {};
+        if (brand) {
+            query.brand = new RegExp(brand, 'i'); // Case-insensitive wyszukiwanie
+        }
+        if (model) {
+            query.model = new RegExp(model, 'i');
+        }
+        if (year) {
+            query.year = parseInt(year);
+        }
+
+        let cars = await Car.find(query);
+
+        // Sortowanie
+        if (sort) {
+            const [field, order] = sort.split('-');
+            cars = cars.sort((a, b) =>
+                order === 'asc' ? a[field] - b[field] : b[field] - a[field]
+            );
+        }
+
         res.json(cars);
     } catch (error) {
         res.status(500).json({ message: 'B³¹d podczas pobierania listy samochodów.', error: error.message });
     }
 });
+
 
 // Dodanie samochodu
 app.post('/cars', upload.single('image'), async (req, res) => {
