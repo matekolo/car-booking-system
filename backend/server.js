@@ -66,23 +66,28 @@ app.post('/register', async (req, res) => {
         }
 
         // Walidacja has³a
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-        if (!passwordRegex.test(password)) {
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d\s]).{8,}$/;
+        const isPasswordValid = passwordRegex.test(password);
+
+        if (!isPasswordValid) {
             return res.status(400).json({
-                message: 'Has³o musi zawieraæ co najmniej 8 znaków, w tym jedn¹ du¿¹ literê, jedn¹ ma³¹ literê, jedn¹ cyfrê i jeden znak specjalny (@$!%*?&).',
+                message: 'Has³o musi zawieraæ co najmniej 8 znaków, w tym jedn¹ du¿¹ literê, jedn¹ ma³¹ literê, jedn¹ cyfrê i jeden znak specjalny.',
             });
         }
 
+        // Sprawdzenie czy email istnieje
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: 'Email jest ju¿ u¿ywany.' });
         }
 
+        // Zapis u¿ytkownika
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({ email, password: hashedPassword });
         await user.save();
         res.status(201).json({ message: 'Rejestracja zakoñczona sukcesem' });
     } catch (error) {
+        console.error('B³¹d podczas rejestracji:', error);
         res.status(500).json({ message: 'B³¹d podczas rejestracji.', error: error.message });
     }
 });
