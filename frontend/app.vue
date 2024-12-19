@@ -1,3 +1,4 @@
+
 <template>
     <div class="container mx-auto py-5">
         <!-- Logowanie -->
@@ -45,16 +46,7 @@
             <h1 class="text-2xl font-bold mb-3">Panel Administracyjny</h1>
             <button @click="logout" class="btn btn-danger mb-5">Wyloguj</button>
             <button @click="currentView = 'reservations'" class="btn btn-secondary mb-5">Zobacz rezerwacje</button>
-
-            <!-- Dodanie nowego pojazdu -->
-            <form @submit.prevent="addCar" enctype="multipart/form-data" class="mb-5">
-                <input v-model="newCar.brand" placeholder="Marka" class="border p-2 mr-2" />
-                <input v-model="newCar.model" placeholder="Model" class="border p-2 mr-2" />
-                <input v-model="newCar.year" placeholder="Rok" type="number" class="border p-2 mr-2" />
-                <input v-model="newCar.horsepower" placeholder="KM" type="number" class="border p-2 mr-2" />
-                <input type="file" ref="imageFile" class="border p-2" />
-                <button type="submit" class="btn btn-success">Dodaj pojazd</button>
-            </form>
+            <button @click="showAddCarModal = true" class="btn btn-success mb-5">Dodaj Samochód</button>
 
             <div v-for="car in cars" :key="car._id" class="border p-3 my-2 rounded shadow">
                 <p>{{ car.brand }} {{ car.model }} ({{ car.year }}, {{ car.horsepower }} KM)</p>
@@ -71,6 +63,24 @@
                     </li>
                 </ul>
                 <button @click="openAddDatePanel(car._id)" class="btn btn-secondary mt-2">Dodaj termin</button>
+            </div>
+        </div>
+
+        <!-- Modal dodawania samochodu -->
+        <div v-if="showAddCarModal" class="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+            <div class="bg-white p-5 rounded shadow-lg w-1/2">
+                <h3 class="text-lg font-bold mb-3">Dodaj Nowy Samochód</h3>
+                <form @submit.prevent="addCar">
+                    <input v-model="newCar.brand" placeholder="Marka" class="border p-2 mb-2 w-full" />
+                    <input v-model="newCar.model" placeholder="Model" class="border p-2 mb-2 w-full" />
+                    <input v-model="newCar.year" placeholder="Rok" type="number" class="border p-2 mb-2 w-full" />
+                    <input v-model="newCar.horsepower" placeholder="KM" type="number" class="border p-2 mb-2 w-full" />
+                    <input type="file" ref="imageFile" class="border p-2 mb-2 w-full" />
+                    <div class="flex justify-between mt-3">
+                        <button type="submit" class="btn btn-success">Dodaj</button>
+                        <button type="button" @click="showAddCarModal = false" class="btn btn-danger">Anuluj</button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -143,6 +153,7 @@
                 addingDateCarId: null,
                 reservations: [],
                 modalMessage: null,
+                showAddCarModal: false, // Nowe pole
             };
         },
         methods: {
@@ -228,6 +239,7 @@
                     await axios.post("http://localhost:3000/cars", formData);
                     this.showModal("Samochód został dodany.");
                     this.fetchCars();
+                    this.showAddCarModal = false; // Zamknięcie modala
                 } catch (error) {
                     this.showModal("Błąd podczas dodawania samochodu.");
                 }
