@@ -5,10 +5,10 @@
             <h2 class="text-xl font-bold mb-3">Logowanie</h2>
             <form @submit.prevent="loginUser">
                 <input v-model="loginData.email" placeholder="Email" class="border p-2 mb-2 w-full" type="email" />
-                <input v-model="loginData.password" placeholder="Has³o" class="border p-2 mb-2 w-full" type="password" />
+                <input v-model="loginData.password" placeholder="HasÅ‚o" class="border p-2 mb-2 w-full" type="password" />
                 <button type="submit" class="btn btn-primary w-full">Zaloguj</button>
             </form>
-            <button @click="currentView = 'register'" class="btn btn-primary w-full mt-2">Zarejestruj siê</button>
+            <button @click="currentView = 'register'" class="btn btn-primary w-full mt-2">Zarejestruj siÄ™</button>
         </div>
 
         <!-- Rejestracja -->
@@ -16,27 +16,27 @@
             <h2 class="text-xl font-bold mb-3">Rejestracja</h2>
             <form @submit.prevent="registerUser">
                 <input v-model="registerData.email" placeholder="Email" class="border p-2 mb-2 w-full" type="email" />
-                <input v-model="registerData.password" placeholder="Has³o" class="border p-2 mb-2 w-full" type="password" />
+                <input v-model="registerData.password" placeholder="HasÅ‚o" class="border p-2 mb-2 w-full" type="password" />
                 <button type="submit" class="btn btn-primary w-full">Zarejestruj</button>
-                <button @click="currentView = 'login'" class="btn btn-primary w-full mt-2">Powrót do logowania</button>
+                <button @click="currentView = 'login'" class="btn btn-primary w-full mt-2">PowrÃ³t do logowania</button>
             </form>
         </div>
 
-        <!-- Widok u¿ytkownika -->
+        <!-- Widok uÅ¼ytkownika -->
         <div v-else-if="currentView === 'user'" class="container">
-            <h1 class="text-2xl font-bold mb-3">Dostêpne samochody</h1>
+            <h1 class="text-2xl font-bold mb-3">DostÄ™pne samochody</h1>
             <button @click="logout" class="btn btn-danger mb-5">Wyloguj</button>
             <div v-for="car in cars" :key="car._id" class="border p-3 mb-2 rounded shadow">
                 <p>{{ car.brand }} {{ car.model }} ({{ car.year }}, {{ car.horsepower }} KM)</p>
-                <img :src="`http://localhost:3000${car.imagePath}`" alt="Zdjêcie auta" class="w-32 h-32 object-cover" />
-                <h3 class="font-bold mt-2">Dostêpne terminy:</h3>
+                <img :src="`http://localhost:3000${car.imagePath}`" alt="ZdjÄ™cie auta" class="w-32 h-32 object-cover" />
+                <h3 class="font-bold mt-2">DostÄ™pne terminy:</h3>
                 <ul v-if="car.availableDates.length">
                     <li v-for="date in car.availableDates" :key="date">
                         {{ date }}
                         <button @click="reserveCar(car._id, date)" class="btn btn-primary btn-sm ml-2">Zarezerwuj</button>
                     </li>
                 </ul>
-                <p v-else class="text-red-500 font-bold">Samochód chwilowo niedostêpny.</p>
+                <p v-else class="text-red-500 font-bold">SamochÃ³d chwilowo niedostÄ™pny.</p>
             </div>
         </div>
 
@@ -58,16 +58,16 @@
 
             <div v-for="car in cars" :key="car._id" class="border p-3 my-2 rounded shadow">
                 <p>{{ car.brand }} {{ car.model }} ({{ car.year }}, {{ car.horsepower }} KM)</p>
-                <img v-if="car.imagePath" :src="`http://localhost:3000${car.imagePath}`" alt="Zdjêcie auta" class="w-32 h-32 object-cover mb-2" />
+                <img v-if="car.imagePath" :src="`http://localhost:3000${car.imagePath}`" alt="ZdjÄ™cie auta" class="w-32 h-32 object-cover mb-2" />
                 <div>
                     <button @click="startEdit(car)" class="btn btn-primary mr-2">Edytuj</button>
-                    <button @click="deleteCar(car._id)" class="btn btn-danger">Usuñ</button>
+                    <button @click="deleteCar(car._id)" class="btn btn-danger">UsuÅ„</button>
                 </div>
-                <h3 class="font-bold mt-3">Dostêpne terminy:</h3>
+                <h3 class="font-bold mt-3">DostÄ™pne terminy:</h3>
                 <ul v-if="car.availableDates.length">
                     <li v-for="date in car.availableDates" :key="date">
                         {{ date }}
-                        <button @click="removeDateFromCar(car._id, date)" class="btn btn-warning btn-sm ml-2">Usuñ</button>
+                        <button @click="removeDateFromCar(car._id, date)" class="btn btn-warning btn-sm ml-2">UsuÅ„</button>
                     </li>
                 </ul>
                 <button @click="openAddDatePanel(car._id)" class="btn btn-secondary mt-2">Dodaj termin</button>
@@ -77,15 +77,15 @@
         <!-- Widok rezerwacji -->
         <div v-else-if="currentView === 'reservations'" class="container">
             <h1 class="text-2xl font-bold mb-3">Lista Rezerwacji</h1>
-            <button @click="currentView = 'admin'" class="btn btn-primary mb-5">Powrót</button>
+            <button @click="currentView = 'admin'" class="btn btn-primary mb-5">PowrÃ³t</button>
             <div v-for="reservation in reservations" :key="reservation._id" class="border p-3 mb-2 rounded shadow">
                 <p v-if="reservation.carId">
-                    Samochód: {{ reservation.carId.brand }} {{ reservation.carId.model }}
+                    SamochÃ³d: {{ reservation.carId.brand }} {{ reservation.carId.model }}
                 </p>
                 <p v-else>Brak danych o samochodzie</p>
                 <p>Data rezerwacji: {{ reservation.date }}</p>
-                <p v-if="reservation.userId">U¿ytkownik: {{ reservation.userId.email }}</p>
-                <button @click="deleteReservation(reservation._id)" class="btn btn-danger">Usuñ rezerwacjê</button>
+                <p v-if="reservation.userId">UÅ¼ytkownik: {{ reservation.userId.email }}</p>
+                <button @click="deleteReservation(reservation._id)" class="btn btn-danger">UsuÅ„ rezerwacjÄ™</button>
             </div>
         </div>
 
@@ -155,20 +155,20 @@
             async registerUser() {
                 try {
                     if (!this.registerData.email || !this.registerData.password) {
-                        this.showModal("Proszê wprowadziæ email i has³o.");
+                        this.showModal("ProszÄ™ wprowadziÄ‡ email i hasÅ‚o.");
                         return;
                     }
                     const response = await axios.post("http://localhost:3000/register", this.registerData);
                     this.showModal(response.data.message);
                     this.currentView = "login";
                 } catch (error) {
-                    this.showModal(error.response?.data?.message || "B³¹d podczas rejestracji.");
+                    this.showModal(error.response?.data?.message || "BÅ‚Ä…d podczas rejestracji.");
                 }
             },
             async loginUser() {
                 try {
                     if (!this.loginData.email || !this.loginData.password) {
-                        this.showModal("Proszê wprowadziæ email i has³o.");
+                        this.showModal("ProszÄ™ wprowadziÄ‡ email i hasÅ‚o.");
                         return;
                     }
                     const response = await axios.post("http://localhost:3000/login", this.loginData);
@@ -178,7 +178,7 @@
                     this.fetchReservations();
                     this.fetchCars();
                 } catch (error) {
-                    this.showModal("B³¹d podczas logowania.");
+                    this.showModal("BÅ‚Ä…d podczas logowania.");
                 }
             },
             async fetchCars() {
@@ -186,16 +186,16 @@
                     const response = await axios.get("http://localhost:3000/cars");
                     this.cars = response.data;
                 } catch (error) {
-                    this.showModal("B³¹d podczas pobierania listy samochodów.");
+                    this.showModal("BÅ‚Ä…d podczas pobierania listy samochodÃ³w.");
                 }
             },
             async reserveCar(carId, date) {
                 try {
                     await axios.post(`http://localhost:3000/cars/${carId}/reserve`, { date, userId: this.loggedInUserId });
-                    this.showModal("Rezerwacja zakoñczona sukcesem.");
+                    this.showModal("Rezerwacja zakoÅ„czona sukcesem.");
                     this.fetchCars();
                 } catch (error) {
-                    this.showModal("B³¹d podczas rezerwacji.");
+                    this.showModal("BÅ‚Ä…d podczas rezerwacji.");
                 }
             },
             async fetchReservations() {
@@ -203,16 +203,16 @@
                     const response = await axios.get("http://localhost:3000/reservations");
                     this.reservations = response.data;
                 } catch (error) {
-                    this.showModal("B³¹d podczas pobierania rezerwacji.");
+                    this.showModal("BÅ‚Ä…d podczas pobierania rezerwacji.");
                 }
             },
             async deleteReservation(reservationId) {
                 try {
                     await axios.delete(`http://localhost:3000/reservations/${reservationId}`);
-                    this.showModal("Rezerwacja zosta³a usuniêta.");
+                    this.showModal("Rezerwacja zostaÅ‚a usuniÄ™ta.");
                     this.fetchReservations();
                 } catch (error) {
-                    this.showModal("B³¹d podczas usuwania rezerwacji.");
+                    this.showModal("BÅ‚Ä…d podczas usuwania rezerwacji.");
                 }
             },
             async addCar() {
@@ -226,19 +226,19 @@
                         formData.append("image", this.$refs.imageFile.files[0]);
                     }
                     await axios.post("http://localhost:3000/cars", formData);
-                    this.showModal("Samochód zosta³ dodany.");
+                    this.showModal("SamochÃ³d zostaÅ‚ dodany.");
                     this.fetchCars();
                 } catch (error) {
-                    this.showModal("B³¹d podczas dodawania samochodu.");
+                    this.showModal("BÅ‚Ä…d podczas dodawania samochodu.");
                 }
             },
             async deleteCar(carId) {
                 try {
                     await axios.delete(`http://localhost:3000/cars/${carId}`);
-                    this.showModal("Samochód zosta³ usuniêty.");
+                    this.showModal("SamochÃ³d zostaÅ‚ usuniÄ™ty.");
                     this.fetchCars();
                 } catch (error) {
-                    this.showModal("B³¹d podczas usuwania samochodu.");
+                    this.showModal("BÅ‚Ä…d podczas usuwania samochodu.");
                 }
             },
             async saveEdit() {
@@ -252,35 +252,35 @@
                         formData.append("image", this.$refs.editImageFile.files[0]);
                     }
                     await axios.put(`http://localhost:3000/cars/${this.editingCar._id}`, formData);
-                    this.showModal("Samochód zosta³ zaktualizowany.");
+                    this.showModal("SamochÃ³d zostaÅ‚ zaktualizowany.");
                     this.fetchCars();
                     this.editingCar = null;
                 } catch (error) {
-                    this.showModal("B³¹d podczas edycji samochodu.");
+                    this.showModal("BÅ‚Ä…d podczas edycji samochodu.");
                 }
             },
             async addDateToCar() {
                 if (!this.newDate) {
-                    this.showModal("Proszê wprowadziæ datê.");
+                    this.showModal("ProszÄ™ wprowadziÄ‡ datÄ™.");
                     return;
                 }
                 try {
                     await axios.post(`http://localhost:3000/cars/${this.addingDateCarId}/add-date`, { date: this.newDate });
-                    this.showModal("Termin dodany pomyœlnie.");
+                    this.showModal("Termin dodany pomyÅ›lnie.");
                     this.newDate = "";
                     this.addingDateCarId = null;
                     this.fetchCars();
                 } catch (error) {
-                    this.showModal("B³¹d podczas dodawania terminu.");
+                    this.showModal("BÅ‚Ä…d podczas dodawania terminu.");
                 }
             },
             async removeDateFromCar(carId, date) {
                 try {
                     await axios.post(`http://localhost:3000/cars/${carId}/remove-date`, { date });
-                    this.showModal("Termin zosta³ usuniêty.");
+                    this.showModal("Termin zostaÅ‚ usuniÄ™ty.");
                     this.fetchCars();
                 } catch (error) {
-                    this.showModal("B³¹d podczas usuwania terminu.");
+                    this.showModal("BÅ‚Ä…d podczas usuwania terminu.");
                 }
             },
             startEdit(car) {
