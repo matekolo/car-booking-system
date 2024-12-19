@@ -57,19 +57,36 @@ const upload = multer({ storage });
 // Rejestracja u¿ytkownika
 app.post('/register', async (req, res) => {
     try {
-        const existingUser = await User.findOne({ email: req.body.email });
+        const { email, password } = req.body;
+
+        // Walidacja e-maila
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: 'Podany adres email jest niepoprawny.' });
+        }
+
+        // Walidacja has³a
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({
+                message: 'Has³o musi zawieraæ co najmniej 8 znaków, w tym jedn¹ du¿¹ literê, jedn¹ ma³¹ literê, jedn¹ cyfrê i jeden znak specjalny (@$!%*?&).',
+            });
+        }
+
+        const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: 'Email jest ju¿ u¿ywany.' });
         }
 
-        const hashedPassword = await bcrypt.hash(req.body.password, 10);
-        const user = new User({ email: req.body.email, password: hashedPassword });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = new User({ email, password: hashedPassword });
         await user.save();
         res.status(201).json({ message: 'Rejestracja zakoñczona sukcesem' });
     } catch (error) {
         res.status(500).json({ message: 'B³¹d podczas rejestracji.', error: error.message });
     }
 });
+
 
 // Logowanie u¿ytkownika
 app.post('/login', async (req, res) => {

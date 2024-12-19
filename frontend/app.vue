@@ -53,7 +53,7 @@
         <div v-else-if="currentView === 'register'" class="border p-5 rounded shadow mx-auto max-w-sm">
             <h2 class="text-xl font-bold mb-3">Rejestracja</h2>
             <form @submit.prevent="registerUser">
-                <input v-model="registerData.email" placeholder="Email" class="border p-2 mb-2 w-full" type="email" />
+                <input v-model="registerData.email" placeholder="Email" class="border p-2 mb-2 w-full" type="text" />
                 <input v-model="registerData.password" placeholder="Hasło" class="border p-2 mb-2 w-full" type="password" />
                 <button type="submit" class="btn btn-primary w-full">Zarejestruj</button>
                 <button @click="currentView = 'login'" class="btn btn-primary w-full mt-2">Powrót do logowania</button>
@@ -200,12 +200,34 @@
             closeModal() {
                 this.modalMessage = null;
             },
+
+            validateEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            },
+            validatePassword(password) {
+                const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+                return passwordRegex.test(password);
+            },
             async registerUser() {
                 try {
                     if (!this.registerData.email || !this.registerData.password) {
                         this.showModal("Proszę wprowadzić email i hasło.");
                         return;
                     }
+
+                    if (!this.validateEmail(this.registerData.email)) {
+                        this.showModal("Podany adres email jest niepoprawny.");
+                        return;
+                    }
+
+                    if (!this.validatePassword(this.registerData.password)) {
+                        this.showModal(
+                            "Hasło musi zawierać co najmniej 8 znaków, w tym jedną dużą literę, jedną małą literę, jedną cyfrę i jeden znak specjalny (@$!%*?&)."
+                        );
+                        return;
+                    }
+
                     const response = await axios.post("http://localhost:3000/register", this.registerData);
                     this.showModal(response.data.message);
                     this.currentView = "login";
@@ -271,8 +293,27 @@
                     this.showModal("Błąd podczas usuwania rezerwacji.");
                 }
             },
+
+            validateHorsepower(horsepower) {
+                const horsepowerRegex = /^\d+$/;
+                return horsepowerRegex.test(horsepower);
+            },
+            validateYear(year) {
+                const currentYear = new Date().getFullYear();
+                return year >= 1886 && year <= currentYear; // Samochody od 1886 roku
+            },
             async addCar() {
                 try {
+                    // Walidacja pól
+                    if (!this.validateHorsepower(this.newCar.horsepower)) {
+                        this.showModal("Pole 'KM' musi zawierać tylko liczby.");
+                        return;
+                    }
+                    if (!this.validateYear(this.newCar.year)) {
+                        this.showModal("Pole 'Rok' musi zawierać poprawny rok.");
+                        return;
+                    }
+
                     const formData = new FormData();
                     formData.append("brand", this.newCar.brand);
                     formData.append("model", this.newCar.model);
@@ -284,7 +325,7 @@
                     await axios.post("http://localhost:3000/cars", formData);
                     this.showModal("Samochód został dodany.");
                     this.fetchCars();
-                    this.showAddCarModal = false; // Zamknięcie modala
+                    this.showAddCarModal = false;
                 } catch (error) {
                     this.showModal("Błąd podczas dodawania samochodu.");
                 }
@@ -300,6 +341,16 @@
             },
             async saveEdit() {
                 try {
+                    // Walidacja pól
+                    if (!this.validateHorsepower(this.editingCar.horsepower)) {
+                        this.showModal("Pole 'KM' musi zawierać tylko liczby.");
+                        return;
+                    }
+                    if (!this.validateYear(this.editingCar.year)) {
+                        this.showModal("Pole 'Rok' musi zawierać poprawny rok.");
+                        return;
+                    }
+
                     const formData = new FormData();
                     formData.append("brand", this.editingCar.brand);
                     formData.append("model", this.editingCar.model);
@@ -316,9 +367,19 @@
                     this.showModal("Błąd podczas edycji samochodu.");
                 }
             },
+
+            validateDate(date) {
+                const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+                if (!dateRegex.test(date)) {
+                    return false;
+                }
+                const parsedDate = new Date(date);
+                return parsedDate instanceof Date && !isNaN(parsedDate);
+            },
+
             async addDateToCar() {
-                if (!this.newDate) {
-                    this.showModal("Proszę wprowadzić datę.");
+                if (!this.validateDate(this.newDate)) {
+                    this.showModal("Proszę wprowadzić poprawną datę w formacie RRRR-MM-DD.");
                     return;
                 }
                 try {
