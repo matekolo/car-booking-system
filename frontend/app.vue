@@ -1,6 +1,43 @@
 
 <template>
-    <div class="container mx-auto py-5">
+    <div :class="currentView === 'welcome' ? 'h-screen relative bg-cover bg-center' : 'h-screen relative'" :style="currentView === 'welcome' ? { backgroundImage: `url(http://localhost:3000/uploads/background-image.png)` } : {}">
+        <!-- Strona powitalna -->
+        <div v-if="currentView === 'welcome'" class="relative flex flex-col items-center justify-center h-full text-white px-4">
+            <!-- Przycisk logowania/rejestracji -->
+            <button @click="currentView = 'login'" class="absolute top-4 right-4 btn btn-primary">Logowanie/Rejestracja</button>
+
+            <!-- Tytuł główny -->
+            <h1 class="text-5xl font-bold mb-10 text-black drop-shadow-md">Car Rental</h1>
+
+            <!-- Sekcja opisów -->
+            <div class="w-full max-w-6xl">
+                <!-- Dwa panele obok siebie -->
+                <div class="flex justify-between mb-6">
+                    <!-- Panel 1 -->
+                    <div class="bg-white text-gray-900 p-6 rounded-lg shadow-md w-1/2 mr-3 border-2 border-black">
+                        <h2 class="text-2xl font-bold mb-3">Przeżyj Dzień Pełen Adrenaliny</h2>
+                        <p>
+                            Marzysz o przejażdżce sportowym samochodem, który przyspiesza bicie serca? Nasza aplikacja pozwoli Ci spełnić to marzenie! Wybierz swój wymarzony model, zarezerwuj go w kilka kliknięć i ciesz się emocjami za kierownicą najnowszych i najszybszych aut. Twój dzień pełen adrenaliny zaczyna się tutaj!
+                        </p>
+                    </div>
+                    <!-- Panel 2 -->
+                    <div class="bg-white text-gray-900 p-6 rounded-lg shadow-md w-1/2 ml-3 border-2 border-black">
+                        <h2 class="text-2xl font-bold mb-3">Ekskluzywne Doświadczenie za Kierownicą</h2>
+                        <p>
+                            Odkryj luksus w najlepszym wydaniu. Wynajmij sportowy samochód na wyjątkowy dzień i poczuj, jak to jest prowadzić ikonę motoryzacji. Bez skomplikowanych formalności – tylko Ty, otwarta droga i niepowtarzalne wrażenia. Wystarczy kilka kliknięć, aby przeżyć coś niezapomnianego.
+                        </p>
+                    </div>
+                </div>
+                <!-- Podłużny panel pod spodem -->
+                <div class="bg-white text-gray-900 p-6 rounded-lg shadow-md border-2 border-black">
+                    <h2 class="text-2xl font-bold mb-3">Wybierz, Zarezerwuj, Jedź!</h2>
+                    <p>
+                        Twoja pasja do szybkich samochodów jest teraz na wyciągnięcie ręki. Oferujemy szeroki wybór najpopularniejszych sportowych modeli – od klasycznych po futurystyczne. Dzięki naszej intuicyjnej aplikacji rezerwacja trwa chwilę, a Ty możesz skupić się na tym, co najważniejsze – czerpaniu przyjemności z jazdy.
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- Logowanie -->
         <div v-if="currentView === 'login'" class="border p-5 rounded shadow mx-auto max-w-sm">
             <h2 class="text-xl font-bold mb-3">Logowanie</h2>
@@ -141,7 +178,7 @@
     export default {
         data() {
             return {
-                currentView: "login",
+                currentView: "welcome", // Dodano stronę powitalną jako widok początkowy
                 loginData: { email: "", password: "" },
                 registerData: { email: "", password: "" },
                 cars: [],
@@ -153,7 +190,7 @@
                 addingDateCarId: null,
                 reservations: [],
                 modalMessage: null,
-                showAddCarModal: false, // Nowe pole
+                showAddCarModal: false, // Modal dla dodawania samochodu
             };
         },
         methods: {
@@ -309,10 +346,11 @@
                 this.newDate = "";
             },
             logout() {
-                this.currentView = "login";
+                this.currentView = "welcome"; // Po wylogowaniu wraca do strony powitalnej
                 this.loggedInUserId = null;
                 this.userRole = null;
             },
         },
     };
 </script>
+fa
