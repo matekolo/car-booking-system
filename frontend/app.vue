@@ -239,11 +239,19 @@
             },
             async reserveCar(carId, date) {
                 try {
-                    await axios.post(`http://localhost:3000/cars/${carId}/reserve`, { date, userId: this.loggedInUserId });
-                    this.showModal("Rezerwacja zakończona sukcesem.");
-                    this.fetchCars();
+                    const response = await axios.post(`http://localhost:3000/cars/${carId}/reserve`, { date, userId: this.loggedInUserId });
+
+                    if (response.data.activeReservation) {
+                        const { car, date } = response.data.activeReservation;
+                        this.showModal(
+                            `Masz już aktywną rezerwację: ${car.brand} ${car.model} na dzień ${date}.`
+                        );
+                    } else {
+                        this.showModal("Rezerwacja zakończona sukcesem.");
+                        this.fetchCars();
+                    }
                 } catch (error) {
-                    this.showModal("Błąd podczas rezerwacji.");
+                    this.showModal(error.response?.data?.message || "Błąd podczas rezerwacji.");
                 }
             },
             async fetchReservations() {
@@ -353,4 +361,3 @@
         },
     };
 </script>
-fa

@@ -181,6 +181,22 @@ app.post('/cars/:id/reserve', async (req, res) => {
             return res.status(400).json({ message: 'Brakuje wymaganych danych: daty lub ID u¿ytkownika.' });
         }
 
+        // Sprawdzenie, czy u¿ytkownik ma ju¿ aktywn¹ rezerwacjê
+        const existingReservation = await Reservation.findOne({
+            userId: userId,
+            date: { $gte: new Date().toISOString().split('T')[0] } // Rezerwacje z przysz³ymi datami
+        }).populate('carId');
+
+        if (existingReservation) {
+            return res.status(200).json({
+                message: 'Masz ju¿ aktywn¹ rezerwacjê.',
+                activeReservation: {
+                    car: existingReservation.carId,
+                    date: existingReservation.date
+                }
+            });
+        }
+
         const car = await Car.findById(req.params.id);
         if (!car) {
             return res.status(404).json({ message: 'Samochód nie zosta³ znaleziony.' });
@@ -205,6 +221,8 @@ app.post('/cars/:id/reserve', async (req, res) => {
     }
 });
 
+
+
 // Pobranie listy rezerwacji
 app.get('/reservations', async (req, res) => {
     try {
@@ -222,11 +240,21 @@ app.delete('/reservations/:id', async (req, res) => {
         if (!reservation) {
             return res.status(404).json({ message: 'Rezerwacja nie zosta³a znaleziona.' });
         }
+
+        // Przywróæ datê do dostêpnych terminów samochodu
+        const car = await Car.findById(reservation.carId);
+        if (car && !car.availableDates.includes(reservation.date)) {
+            car.availableDates.push(reservation.date);
+            car.availableDates.sort(); // Sortowanie dat
+            await car.save();
+        }
+
         res.status(200).json({ message: 'Rezerwacja zosta³a usuniêta.' });
     } catch (error) {
         res.status(500).json({ message: 'B³¹d podczas usuwania rezerwacji.', error: error.message });
     }
 });
+
 
 // Usuniêcie samochodu
 app.delete('/cars/:id', async (req, res) => {
