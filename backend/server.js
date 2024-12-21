@@ -1,4 +1,4 @@
-const express = require('express');
+Ôªøconst express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Po≥πczenie z MongoDB
+// Polaczenie z MongoDB
 mongoose.connect('mongodb://127.0.0.1:27017/carBookingSystem', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -54,7 +54,7 @@ const upload = multer({ storage });
 
 // Endpointy
 
-// Rejestracja uøytkownika
+// Rejestracja u≈ºytkownika
 app.post('/register', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -65,49 +65,49 @@ app.post('/register', async (req, res) => {
             return res.status(400).json({ message: 'Podany adres email jest niepoprawny.' });
         }
 
-        // Walidacja has≥a
+        // Walidacja hasla
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d\s]).{8,}$/;
         const isPasswordValid = passwordRegex.test(password);
 
         if (!isPasswordValid) {
             return res.status(400).json({
-                message: 'Has≥o musi zawieraÊ co najmniej 8 znakÛw, w tym jednπ duøπ literÍ, jednπ ma≥π literÍ, jednπ cyfrÍ i jeden znak specjalny.',
+                message: 'Has≈Ço musi zawiera√¶ co najmniej 8 znak√≥w, w tym jednƒÖ du≈ºƒÖ literƒô, jednƒÖ ma≈ÇƒÖ literƒô, jednƒÖ cyfrƒô i jeden znak specjalny.',
             });
         }
 
         // Sprawdzenie czy email istnieje
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: 'Email jest juø uøywany.' });
+            return res.status(400).json({ message: 'Email jest ju≈º u≈ºywany.' });
         }
 
-        // Zapis uøytkownika
+        // Zapis u≈ºytkownika
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({ email, password: hashedPassword });
         await user.save();
-        res.status(201).json({ message: 'Rejestracja zakoÒczona sukcesem' });
+        res.status(201).json({ message: 'Rejestracja zako≈Ñczona sukcesem' });
     } catch (error) {
-        console.error('B≥πd podczas rejestracji:', error);
-        res.status(500).json({ message: 'B≥πd podczas rejestracji.', error: error.message });
+        console.error('B≈ÇƒÖd podczas rejestracji:', error);
+        res.status(500).json({ message: 'B≈ÇƒÖd podczas rejestracji.', error: error.message });
     }
 });
 
 
-// Logowanie uøytkownika
+// Logowanie uzytkownika
 app.post('/login', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.body.email });
         if (user && (await bcrypt.compare(req.body.password, user.password))) {
             res.json({ userId: user._id, role: user.role });
         } else {
-            res.status(400).json({ message: 'Nieprawid≥owy email lub has≥o' });
+            res.status(400).json({ message: 'Nieprawid≈Çowy email lub has≈Ço' });
         }
     } catch (error) {
-        res.status(500).json({ message: 'B≥πd podczas logowania.', error: error.message });
+        res.status(500).json({ message: 'B≈ÇƒÖd podczas logowania.', error: error.message });
     }
 });
 
-// Pobranie listy samochodÛw
+// Pobranie listy samochod√≥w
 app.get('/cars', async (req, res) => {
     try {
         const { brand, model, year, sort } = req.query;
@@ -135,7 +135,7 @@ app.get('/cars', async (req, res) => {
 
         res.json(cars);
     } catch (error) {
-        res.status(500).json({ message: 'B≥πd podczas pobierania listy samochodÛw.', error: error.message });
+        res.status(500).json({ message: 'B≈ÇƒÖd podczas pobierania listy samochod√≥w.', error: error.message });
     }
 });
 
@@ -151,7 +151,7 @@ app.post('/cars', upload.single('image'), async (req, res) => {
         await newCar.save();
         res.status(201).json(newCar);
     } catch (error) {
-        res.status(500).json({ message: 'B≥πd podczas dodawania samochodu.', error: error.message });
+        res.status(500).json({ message: 'B≈ÇƒÖd podczas dodawania samochodu.', error: error.message });
     }
 });
 
@@ -164,11 +164,11 @@ app.put('/cars/:id', upload.single('image'), async (req, res) => {
         }
         const updatedCar = await Car.findByIdAndUpdate(req.params.id, updatedCarData, { new: true });
         if (!updatedCar) {
-            return res.status(404).json({ message: 'SamochÛd nie zosta≥ znaleziony.' });
+            return res.status(404).json({ message: 'Samoch√≥d nie zosta≈Ç znaleziony.' });
         }
-        res.json({ message: 'SamochÛd zaktualizowany pomyúlnie.', car: updatedCar });
+        res.json({ message: 'Samoch√≥d zaktualizowany pomy≈õlnie.', car: updatedCar });
     } catch (error) {
-        res.status(500).json({ message: 'B≥πd podczas edycji samochodu.', error: error.message });
+        res.status(500).json({ message: 'B≈ÇƒÖd podczas edycji samochodu.', error: error.message });
     }
 });
 
@@ -181,20 +181,20 @@ app.post('/cars/:id/add-date', async (req, res) => {
         }
         const car = await Car.findById(req.params.id);
         if (!car) {
-            return res.status(404).json({ message: 'SamochÛd nie zosta≥ znaleziony.' });
+            return res.status(404).json({ message: 'Samoch√≥d nie zosta≈Ç znaleziony.' });
         }
         if (car.availableDates.includes(date)) {
-            return res.status(400).json({ message: 'Ten termin juø istnieje.' });
+            return res.status(400).json({ message: 'Ten termin ju≈º istnieje.' });
         }
         car.availableDates.push(date);
         await car.save();
-        res.status(200).json({ message: 'Termin dodany pomyúlnie.', car });
+        res.status(200).json({ message: 'Termin dodany pomy≈õlnie.', car });
     } catch (error) {
-        res.status(500).json({ message: 'B≥πd podczas dodawania terminu.', error: error.message });
+        res.status(500).json({ message: 'B≈ÇƒÖd podczas dodawania terminu.', error: error.message });
     }
 });
 
-// UsuniÍcie terminu wynajmu
+// Usuniecie terminu wynajmu
 app.post('/cars/:id/remove-date', async (req, res) => {
     try {
         const { date } = req.body;
@@ -203,17 +203,17 @@ app.post('/cars/:id/remove-date', async (req, res) => {
         }
         const car = await Car.findById(req.params.id);
         if (!car) {
-            return res.status(404).json({ message: 'SamochÛd nie zosta≥ znaleziony.' });
+            return res.status(404).json({ message: 'Samoch√≥d nie zosta≈Ç znaleziony.' });
         }
         const updatedDates = car.availableDates.filter(d => d !== date);
         if (updatedDates.length === car.availableDates.length) {
-            return res.status(400).json({ message: 'Nie znaleziono tego terminu na liúcie.' });
+            return res.status(400).json({ message: 'Nie znaleziono tego terminu na li≈õcie.' });
         }
         car.availableDates = updatedDates;
         await car.save();
-        res.status(200).json({ message: 'Termin usuniÍty pomyúlnie.', car });
+        res.status(200).json({ message: 'Termin usuniƒôty pomy≈õlnie.', car });
     } catch (error) {
-        res.status(500).json({ message: 'B≥πd podczas usuwania terminu.', error: error.message });
+        res.status(500).json({ message: 'B≈ÇƒÖd podczas usuwania terminu.', error: error.message });
     }
 });
 
@@ -223,18 +223,18 @@ app.post('/cars/:id/reserve', async (req, res) => {
         const { date, userId } = req.body;
 
         if (!date || !userId) {
-            return res.status(400).json({ message: 'Brakuje wymaganych danych: daty lub ID uøytkownika.' });
+            return res.status(400).json({ message: 'Brakuje wymaganych danych: daty lub ID u≈ºytkownika.' });
         }
 
-        // Sprawdzenie, czy uøytkownik ma juø aktywnπ rezerwacjÍ
+        // Sprawdzenie rezerwacji uzytkownika
         const existingReservation = await Reservation.findOne({
             userId: userId,
-            date: { $gte: new Date().toISOString().split('T')[0] } // Rezerwacje z przysz≥ymi datami
+            date: { $gte: new Date().toISOString().split('T')[0] } // Rezerwacje z przysz≈Çymi datami
         }).populate('carId');
 
         if (existingReservation) {
             return res.status(200).json({
-                message: 'Masz juø aktywnπ rezerwacjÍ.',
+                message: 'Masz ju≈º aktywnƒÖ rezerwacjƒô.',
                 activeReservation: {
                     car: existingReservation.carId,
                     date: existingReservation.date
@@ -244,25 +244,25 @@ app.post('/cars/:id/reserve', async (req, res) => {
 
         const car = await Car.findById(req.params.id);
         if (!car) {
-            return res.status(404).json({ message: 'SamochÛd nie zosta≥ znaleziony.' });
+            return res.status(404).json({ message: 'Samoch√≥d nie zosta≈Ç znaleziony.' });
         }
 
-        // Sprawdü, czy termin jest dostÍpny
+        // Sprawdz, czy termin jest dostepny
         if (!car.availableDates.includes(date)) {
-            return res.status(400).json({ message: 'Wybrany termin jest niedostÍpny.' });
+            return res.status(400).json({ message: 'Wybrany termin jest niedost√™pny.' });
         }
 
-        // UsuÒ termin z dostÍpnych dat
+        // Usun termin z dostepnych dat
         car.availableDates = car.availableDates.filter(d => d !== date);
         await car.save();
 
-        // Zapisz rezerwacjÍ
+        // Zapisz rezerwacj√™
         const reservation = new Reservation({ carId: car._id, userId, date });
         await reservation.save();
 
-        res.status(200).json({ message: 'Rezerwacja zakoÒczona sukcesem.' });
+        res.status(200).json({ message: 'Rezerwacja zako√±czona sukcesem.' });
     } catch (error) {
-        res.status(500).json({ message: 'B≥πd podczas rezerwacji samochodu.', error: error.message });
+        res.status(500).json({ message: 'B≈ÇƒÖd podczas rezerwacji samochodu.', error: error.message });
     }
 });
 
@@ -274,19 +274,19 @@ app.get('/reservations', async (req, res) => {
         const reservations = await Reservation.find().populate('carId').populate('userId');
         res.json(reservations);
     } catch (error) {
-        res.status(500).json({ message: 'B≥πd podczas pobierania rezerwacji.', error: error.message });
+        res.status(500).json({ message: 'B≈ÇƒÖd podczas pobierania rezerwacji.', error: error.message });
     }
 });
 
-// UsuniÍcie rezerwacji
+// Usuni√™cie rezerwacji
 app.delete('/reservations/:id', async (req, res) => {
     try {
         const reservation = await Reservation.findByIdAndDelete(req.params.id);
         if (!reservation) {
-            return res.status(404).json({ message: 'Rezerwacja nie zosta≥a znaleziona.' });
+            return res.status(404).json({ message: 'Rezerwacja nie zosta≈Ça znaleziona.' });
         }
 
-        // PrzywrÛÊ datÍ do dostÍpnych terminÛw samochodu
+        // Przywr√≥c date dostyepnych samochodow
         const car = await Car.findById(reservation.carId);
         if (car && !car.availableDates.includes(reservation.date)) {
             car.availableDates.push(reservation.date);
@@ -294,24 +294,24 @@ app.delete('/reservations/:id', async (req, res) => {
             await car.save();
         }
 
-        res.status(200).json({ message: 'Rezerwacja zosta≥a usuniÍta.' });
+        res.status(200).json({ message: 'Rezerwacja zosta≈Ça usuniƒôta.' });
     } catch (error) {
-        res.status(500).json({ message: 'B≥πd podczas usuwania rezerwacji.', error: error.message });
+        res.status(500).json({ message: 'B≈ÇƒÖd podczas usuwania rezerwacji.', error: error.message });
     }
 });
 
 
-// UsuniÍcie samochodu
+// Usuniƒôcie samochodu
 app.delete('/cars/:id', async (req, res) => {
     try {
         await Car.findByIdAndDelete(req.params.id);
-        res.status(200).json({ message: 'SamochÛd zosta≥ usuniÍty.' });
+        res.status(200).json({ message: 'Samoch√≥d zosta≈Ç usuniƒôty.' });
     } catch (error) {
-        res.status(500).json({ message: 'B≥πd podczas usuwania samochodu.', error: error.message });
+        res.status(500).json({ message: 'B≈ÇƒÖd podczas usuwania samochodu.', error: error.message });
     }
 });
 
 // Uruchomienie serwera
 app.listen(3000, () => {
-    console.log('Serwer dzia≥a na http://localhost:3000');
+    console.log('Serwer dzia≈Ça na http://localhost:3000');
 });
